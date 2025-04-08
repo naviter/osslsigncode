@@ -4180,7 +4180,7 @@ static int read_token(GLOBAL_OPTIONS *options, ENGINE *engine)
 
     options->pkey = ENGINE_load_private_key(engine, options->keyfile, NULL, NULL);
     /* Free the functional reference from ENGINE_init */
-    ENGINE_finish(engine);
+    // ENGINE_finish(engine);
     if (!options->pkey) {
         fprintf(stderr, "Failed to load private key %s\n", options->keyfile);
         return 0; /* FAILED */
@@ -4237,7 +4237,7 @@ static int read_crypto_params(GLOBAL_OPTIONS *options)
     } else if (options->p11module) {
 #if OPENSSL_VERSION_NUMBER>=0x30000000L
         /* Try to load PKCS#11 provider first */
-        if ((options->provider && provider_load(options->provider)) || provider_load("pkcs11prov")) {
+        if ((options->provider && provider_load(options->provider))) {
             load_objects_from_store(options->keyfile, options->pass, &options->pkey, NULL, NULL);
             load_objects_from_store(options->p11cert, options->pass, NULL, options->certs, NULL);
         } else
@@ -5221,6 +5221,14 @@ err_cleanup:
     else
         printf(ret ? "Failed\n" : "Succeeded\n");
     free_options(&options);
+    if((options.p11engine) || (options.p11module)){
+        ENGINE* engine = engine_pkcs11();
+        if(!engine)
+            engine = engine_dynamic(&options);
+        if(engine){
+            ENGINE_finish(engine);
+        }
+    }
     return ret;
 }
 
